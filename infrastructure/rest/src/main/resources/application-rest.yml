@@ -1,0 +1,4 @@
+app:
+  google:
+    place:
+      api-key: ${GOOGLE_PLACE_API_KEY}
