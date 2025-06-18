@@ -1,5 +1,6 @@
 package kr.wooco.woocobe.core.notification.application.service
 
+import kr.wooco.woocobe.core.notification.application.buffer.NotificationJob
 import kr.wooco.woocobe.core.notification.application.port.`in`.CreateNotificationUseCase
 import kr.wooco.woocobe.core.notification.application.port.`in`.DeleteDeviceTokenUseCase
 import kr.wooco.woocobe.core.notification.application.port.`in`.MarkAsReadNotificationUseCase
@@ -26,14 +27,16 @@ class NotificationCommandService(
     RegisterDeviceTokenUseCase,
     DeleteDeviceTokenUseCase {
     @Transactional
-    override fun createNotification(command: CreateNotificationUseCase.Command): Long {
+    override fun createNotification(command: CreateNotificationUseCase.Command): List<NotificationJob> {
         val notification = Notification.create(
             userId = command.userId,
             targetId = command.targetId,
             targetName = command.targetName,
             type = NotificationType(command.type),
         )
-        return notificationCommandPort.saveNotification(notification).id
+        val savedNotification = notificationCommandPort.saveNotification(notification)
+        return deviceTokenQueryPort.getAllByUserIdWithActive(notification.userId)
+            .map { token -> NotificationJob(savedNotification, token) }
     }
 
     @Transactional
